@@ -14,14 +14,18 @@ def main():
 
   loss = nn.MSELoss()
 
-  src_data = torch.rand(10, 32, d_model)  # (seq_len, batch_size, d_model)
-  tgt_data = torch.rand(20, 32, d_model)  # (seq_len, batch_size, d_model)
+  src_data = torch.rand(32, 10, d_model)  # (batch_size, seq_len, d_model)
+  tgt_data = torch.rand(32, 20, d_model)  # (batch_size, seq_len, d_model)
 
   output = transformer.forward(src_data, tgt_data)
   loss_value = loss(output, tgt_data)
   
-  print(output)
-  print(loss_value)
+  loss_value.backward()
+  parameter_count = sum(parameter.numel() for parameter in transformer.parameters())
+
+  print(f"output shape: {tuple(output.shape)}")
+  print(f"loss: {loss_value.item():.4f}")
+  print(f"trainable parameters: {parameter_count:,}")
 
 if __name__ == "__main__":
   main()
