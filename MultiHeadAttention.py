@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 from Attention import attention
+from rope import RoPE
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, num_heads:int, d_model:int, d_k:int):
@@ -8,6 +9,7 @@ class MultiHeadAttention(nn.Module):
         self.num_heads = num_heads
         self.d_model = d_model
         self.d_k = d_k
+        self.rope = RoPE(d_k=d_k)
 
         #선형 변환으로 다양한 attention 관점을 갖게 한다.
         self.q_linear = nn.Linear(d_model, num_heads * d_k)
@@ -23,7 +25,10 @@ class MultiHeadAttention(nn.Module):
         k = self.k_linear(k).view(batch_size, -1, self.num_heads, self.d_k).transpose(1,2)
         v = self.v_linear(v).view(batch_size, -1, self.num_heads, self.d_k).transpose(1,2)
 
-        attn_output = attention(q, k, v, mask)
+        rope_q = self.rope(q)
+        rope_k = self.rope(k)
+
+        attn_output = attention(rope_q, rope_k, v, mask)
         attn_output = attn_output.transpose(1,2).contiguous().view(batch_size, -1, self.num_heads * self.d_k)
         output = self.out_linear(attn_output)
 
